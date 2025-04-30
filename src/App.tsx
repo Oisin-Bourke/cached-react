@@ -1,35 +1,64 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { useState } from "react"
+import "./App.css"
+import { memoize } from "./App.util"
+
+const slowConcatAsync = async (name: string, pet: string) => {
+	await new Promise((resolve) => setTimeout(resolve, 3000))
+	return `Hello ${name}, your pet is ${pet}`
+}
+
+const memoizedSlowConcat = memoize(slowConcatAsync)
+
+const defaultFormData = {
+	name: "",
+	pet: "",
+}
 
 function App() {
-  const [count, setCount] = useState(0)
+	const [formData, setFormData] = useState(defaultFormData)
 
-  return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+	const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+		const { name, value } = event.target
+
+		setFormData((prevData) => ({
+			...prevData,
+			[name]: value,
+		}))
+	}
+
+	const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+		event.preventDefault()
+
+		const { name, pet } = formData
+		const result = await memoizedSlowConcat(name, pet)
+		console.log(result)
+
+		setFormData(defaultFormData)
+	}
+
+	return (
+		<form className='flexColumn' onSubmit={handleSubmit}>
+			<label>
+				Name:
+				<input
+					type='text'
+					name='name'
+					onChange={handleChange}
+					value={formData.name}
+				/>
+			</label>
+			<label>
+				Pet:
+				<input
+					type='text'
+					name='pet'
+					onChange={handleChange}
+					value={formData.pet}
+				/>
+			</label>
+			<button type='submit'>Submit</button>
+		</form>
+	)
 }
 
 export default App
